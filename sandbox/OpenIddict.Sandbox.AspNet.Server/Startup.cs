@@ -80,7 +80,17 @@ public class Startup
                            options.SetClientId("c4ade52327b01ddacff3")
                                   .SetClientSecret("da6bed851b75e317bf6b2cb67013679d9467c122")
                                   .SetRedirectUri("callback/login/github");
-                       });
+                       })
+                        .AddActiveDirectoryFederationServices(options =>
+                        {
+                            options
+                                .SetClientId("some client id") // application (client) id
+                                .SetClientSecret("some secret") // generated secret from azure portal
+                                .SetIssuer("https://login.microsoftonline.com/0585ddbb-4b3c-407a-a707-b0bf65fa71eb/v2.0") // login URL - the GUID is the tenantid
+                                .SetProviderDisplayName("Microsoft Entra ID")
+                                .SetRedirectUri("callback/login/microsoft")
+                                .SetProviderName("Microsoft");
+                        });
             })
 
             // Register the OpenIddict server components.
