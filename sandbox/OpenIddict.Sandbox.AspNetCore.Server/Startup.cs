@@ -96,6 +96,12 @@ public class Startup
                            options.SetClientId("c4ade52327b01ddacff3")
                                   .SetClientSecret("da6bed851b75e317bf6b2cb67013679d9467c122")
                                   .SetRedirectUri("callback/login/github");
+                       }).AddMicrosoft(options =>
+                       {
+                           options
+                               .SetClientId("e622a0e5-f3e8-4998-b4e1-35f45e9b18cd") // application (client) id
+                               .SetClientSecret("_8x8Q~fc7GxwbieK04mL2tQuzrlqMU_yPTd5rawD") // generated secret from azure portal
+                               .SetRedirectUri("/callback/login/microsoft");
                        });
             })
 

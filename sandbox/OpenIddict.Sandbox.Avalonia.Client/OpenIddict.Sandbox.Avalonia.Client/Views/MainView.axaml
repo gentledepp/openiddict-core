@@ -28,10 +28,19 @@
                     Text="{Binding Message}"
                     FontSize="12"
                     HorizontalAlignment="Center" />
+
+                <TextBox
+                    Text="{Binding TenancyName}"
+                    Watermark="Please enter the tenancy name"
+                    TextInputOptions.ContentType="Alpha"
+                    FontSize="12"
+                    HorizontalAlignment="Center"
+                    />
                 
                 <TextBox
                     Text="{Binding ServerUrl}"
                     Watermark="Please enter the server URL"
+                    TextInputOptions.ContentType="Url"
                     FontSize="12"
                     HorizontalAlignment="Center"
                     />

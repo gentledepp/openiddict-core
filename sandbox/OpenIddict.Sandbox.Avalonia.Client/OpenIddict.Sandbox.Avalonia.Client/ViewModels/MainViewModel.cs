@@ -16,6 +16,7 @@ public class MainViewModel : ViewModelBase
     private readonly IClientRegistrationProvider _configurator;
     private string _message = string.Empty;
     private string _serverUrl = "https://localhost:44395";
+    private string? _tenancyName;
     private bool _isEnabled = true;
     CancellationTokenSource? _source;
 
@@ -57,6 +58,12 @@ public class MainViewModel : ViewModelBase
         set { this.RaiseAndSetIfChanged(ref _serverUrl, value); }
     }
 
+    public string? TenancyName
+    {
+        get { return _tenancyName; }
+        set { this.RaiseAndSetIfChanged(ref _tenancyName, value); }
+    }
+
     public string Message
     {
         get { return _message; }
@@ -95,6 +102,14 @@ public class MainViewModel : ViewModelBase
         try
         {
             _source = new CancellationTokenSource(delay: TimeSpan.FromSeconds(90));
+
+            if (parameters != null)
+                parameters["tenancyName"] = TenancyName;
+            else
+                parameters = new()
+                {
+                    ["tenancyName"] = TenancyName
+                };
 
             try
             {

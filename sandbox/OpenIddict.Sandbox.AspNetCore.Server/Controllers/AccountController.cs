@@ -1,4 +1,5 @@
-﻿using System.Security.Claims;
+﻿using System.Net;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -142,6 +143,17 @@ public class AccountController : Controller
         // Request a redirect to the external login provider.
         var redirectUrl = Url.Action("ExternalLoginCallback", "Account", new { ReturnUrl = returnUrl });
         var properties = _signInManager.ConfigureExternalAuthenticationProperties(provider, redirectUrl);
+        
+        if(Request.Query != null)
+        {
+            var urlDecoded = WebUtility.UrlDecode(Request.Query["returnUrl"])?.Replace("/connect/authorize?", null);
+            var parameters = urlDecoded.Split('&').Select(str => str.Split('=')).GroupBy(arr => arr[0]).ToDictionary(g => g.Key, g=>g.SelectMany(s => s).ToList());
+            if(parameters.TryGetValue("tenancyName", out var tenancyName))
+            {
+                Response.Cookies.Append("AbpTenancyName", tenancyName[0]);
+            }
+        }
+
         return new ChallengeResult(provider, properties);
     }
 
