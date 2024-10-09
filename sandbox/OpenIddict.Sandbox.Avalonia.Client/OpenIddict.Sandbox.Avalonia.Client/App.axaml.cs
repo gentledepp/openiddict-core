@@ -14,8 +14,7 @@ public partial class App : Application
 {
     private IServiceCollection? _services;
 
-    //public IHost? GlobalHost { get; private set; }
-    public IServiceProvider? Provider { get; private set; }
+    public IHost? GlobalHost { get; private set; }
 
     public override void Initialize()
     {
@@ -31,26 +30,20 @@ public partial class App : Application
 
         services.AddSupportForRuntimeServerUriChange();
 
-
-
         _services = services;
     }
 
     public IServiceProvider BuildServiceProvider()
     {
-        //var hostBuilder = CreateHostBuilder();
-        //var host = hostBuilder.Build();
-        //GlobalHost = host;
-        //return host.Services;
-
-        Provider = _services!.BuildServiceProvider();
-        return Provider;
+        var hostBuilder = CreateHostBuilder();
+        var host = hostBuilder.Build();
+        GlobalHost = host;
+        return host.Services;
     }
 
-    public override void OnFrameworkInitializationCompleted()
+    public override async void OnFrameworkInitializationCompleted()
     {
-        // provider = GlobalHost!.Services;
-        var provider = Provider;
+        var provider = GlobalHost!.Services;
         if (provider is null)
             throw new InvalidOperationException("DI initialization failed - provider is null");
 
@@ -65,12 +58,12 @@ public partial class App : Application
             window.DataContext = provider.GetRequiredService<MainViewModel>();
             desktop.MainWindow = window;
 
-            //desktop.Exit += (sender, args) =>
-            //{
-            //    GlobalHost.StopAsync(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
-            //    GlobalHost.Dispose();
-            //    GlobalHost = null;
-            //};
+            desktop.Exit += (sender, args) =>
+            {
+                GlobalHost.StopAsync(TimeSpan.FromSeconds(5)).GetAwaiter().GetResult();
+                GlobalHost.Dispose();
+                GlobalHost = null;
+            };
 
             // emulate MAUI behavior
             provider.InitializeMauiInitializeScopedService();
@@ -89,21 +82,26 @@ public partial class App : Application
 
         base.OnFrameworkInitializationCompleted();
 
-        //// Usually, we don't want to block main UI thread.
-        //// But if it's required to start async services before we create any window,
-        //// then don't set any MainWindow, and simply call Show() on a new window later after async initialization. 
-        //await GlobalHost.StartAsync();
+        // Usually, we don't want to block main UI thread.
+        // But if it's required to start async services before we create any window,
+        // then don't set any MainWindow, and simply call Show() on a new window later after async initialization. 
+        await GlobalHost.StartAsync();
     }
 
-    //private HostApplicationBuilder CreateHostBuilder()
-    //{
-    //    // Alternatively, we can use Host.CreateDefaultBuilder, but this sample focuses on HostApplicationBuilder.
-    //    var builder = Host.CreateApplicationBuilder(Environment.GetCommandLineArgs());
+    /// <summary>
+    /// Note: The generic host approach is taken from maxkatz6 (a core contributor of Avalonia)
+    /// https://github.com/AvaloniaUI/Avalonia/issues/5241#issuecomment-1792103733
+    /// </summary>
+    /// <returns></returns>
+    private HostApplicationBuilder CreateHostBuilder()
+    {
+        // Alternatively, we can use Host.CreateDefaultBuilder, but this sample focuses on HostApplicationBuilder.
+        var builder = Host.CreateApplicationBuilder(Environment.GetCommandLineArgs());
 
-    //    foreach (var desc in _services!)
-    //        builder.Services.Add(desc);
+        foreach (var desc in _services!)
+            builder.Services.Add(desc);
 
-    //    return builder;
-    //}
+        return builder;
+    }
 
 }

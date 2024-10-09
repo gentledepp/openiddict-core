@@ -7,11 +7,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Debug;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.Maui.Hosting;
-using OpenIddict.Client;
 using OpenIddict.Client.SystemIntegration;
 using OpenIddict.Sandbox.Maui.Client;
 using System.Security.Cryptography;
-using static OpenIddict.Abstractions.OpenIddictConstants;
 
 namespace OpenIddict.Sandbox.Avalonia.Client.OpenId;
 
@@ -111,16 +109,11 @@ internal static class AvaloniaSetup
             ApplicationName = typeof(App).Assembly.GetName().Name!
         });
 
-        services.AddSingleton<IHostApplicationLifetime, MauiHostApplicationLifetime>();
+        services.AddHostedService<OpenIddictClientSystemIntegrationActivationHandler>();
 
-        services.AddSingleton<IMauiInitializeService>(static provider => new MauiHostedServiceAdapter(
-            ActivatorUtilities.CreateInstance<OpenIddictClientSystemIntegrationActivationHandler>(provider)));
+        services.AddHostedService<OpenIddictClientSystemIntegrationHttpListener>();
 
-        services.AddSingleton<IMauiInitializeService>(static provider => new MauiHostedServiceAdapter(
-            ActivatorUtilities.CreateInstance<OpenIddictClientSystemIntegrationHttpListener>(provider)));
-
-        services.AddSingleton<IMauiInitializeService>(static provider => new MauiHostedServiceAdapter(
-            ActivatorUtilities.CreateInstance<OpenIddictClientSystemIntegrationPipeListener>(provider)));
+        services.AddHostedService<OpenIddictClientSystemIntegrationPipeListener>();
 
         // Register the initialization service responsible for creating the SQLite database.
         services.AddScoped<IMauiInitializeScopedService, Worker>();
