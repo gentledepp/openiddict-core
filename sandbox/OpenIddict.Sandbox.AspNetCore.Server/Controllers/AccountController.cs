@@ -147,10 +147,13 @@ public class AccountController : Controller
         if(Request.Query != null)
         {
             var urlDecoded = WebUtility.UrlDecode(Request.Query["returnUrl"])?.Replace("/connect/authorize?", null);
-            var parameters = urlDecoded.Split('&').Select(str => str.Split('=')).GroupBy(arr => arr[0]).ToDictionary(g => g.Key, g=>g.SelectMany(s => s).ToList());
-            if(parameters.TryGetValue("tenancyName", out var tenancyName))
+            if (urlDecoded != null)
             {
-                Response.Cookies.Append("AbpTenancyName", tenancyName[0]);
+                var parameters = urlDecoded.Split('&').Select(str => str.Split('=')).GroupBy(arr => arr[0]).ToDictionary(g => g.Key, g => g.Select(s => s[1]).ToList());
+                if (parameters.TryGetValue("tenancyName", out var tenancyName))
+                {
+                    Response.Cookies.Append("AbpTenancyName", tenancyName[0]);
+                }
             }
         }
 
