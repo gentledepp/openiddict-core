@@ -20,16 +20,22 @@
             <StackPanel Spacing="25" VerticalAlignment="Center" Opacity="{Binding IsEnabled, Converter={StaticResource boolToOpacityConverter}}">
 
                 <TextBlock
-                    Text="Hello, World!"
+                    Text="Welcome to Avalonia!"
                     FontSize="32"
                     HorizontalAlignment="Center" />
-
+                
                 <TextBlock
-                    x:Name="Message"
-                    Text="Welcome to Avalonia!"
-                    FontSize="18"
+                    Text="{Binding Message}"
+                    FontSize="12"
                     HorizontalAlignment="Center" />
-
+                
+                <TextBox
+                    Text="{Binding ServerUrl}"
+                    Watermark="Please enter the server URL"
+                    FontSize="12"
+                    HorizontalAlignment="Center"
+                    />
+                
                 <Button
                     x:Name="LocalLogin"
                     Content="Log in using the local server"

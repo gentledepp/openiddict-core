@@ -24,7 +24,7 @@ sealed class Program
             var services = new ServiceCollection();
             var app = new App();
             app.ConfigureServices(services);
-            app.Provider = services.BuildServiceProvider();
+            var provider = app.BuildServiceProvider();
             return app;
         })
             .UsePlatformDetect()

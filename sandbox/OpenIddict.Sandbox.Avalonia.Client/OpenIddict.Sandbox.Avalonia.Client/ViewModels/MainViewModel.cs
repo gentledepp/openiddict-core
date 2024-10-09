@@ -1,13 +1,9 @@
-﻿using Avalonia.Controls;
-using OpenIddict.Abstractions;
+﻿using OpenIddict.Abstractions;
 using OpenIddict.Client;
+using OpenIddict.Sandbox.Avalonia.Client.DynamicServerUrl;
 using ReactiveUI;
-using System;
-using System.Collections.Generic;
 using System.Reactive;
 using System.Reactive.Linq;
-using System.Threading;
-using System.Threading.Tasks;
 using static OpenIddict.Abstractions.OpenIddictConstants;
 using static OpenIddict.Abstractions.OpenIddictExceptions;
 
@@ -17,13 +13,17 @@ public class MainViewModel : ViewModelBase
 {
 
     private OpenIddictClientService _service;
+    private readonly IClientRegistrationProvider _configurator;
     private string _message = string.Empty;
+    private string _serverUrl = "https://localhost:44395";
     private bool _isEnabled = true;
     CancellationTokenSource? _source;
 
-    public MainViewModel(OpenIddictClientService service)
+    public MainViewModel(OpenIddictClientService service,
+        IClientRegistrationProvider configurator)
     {
         _service = service;
+        _configurator = configurator;
 
         var canExecute = this.WhenAnyValue(v => v.IsEnabled);
 
@@ -32,13 +32,30 @@ public class MainViewModel : ViewModelBase
         LogoutCommand = ReactiveCommand.CreateFromTask(LogoutAsync, canExecute);
         CancelCommand = ReactiveCommand.CreateFromTask(CancelAsync, canExecute.Select(v => !v));
 
-        Message = "Welcome to Avalonia UI";
+        // when the server url changes and it is a valid, absolute uri,
+        // then update the issuer using the IClientRegistrationProvider
+        this.WhenAnyValue(v => v.ServerUrl).Where(s => s != null && Uri.TryCreate(s, UriKind.Absolute, out var _))
+            .Throttle(TimeSpan.FromMilliseconds(250))
+            .ObserveOn(RxApp.MainThreadScheduler)
+            .Subscribe(url =>
+            {
+                var serverUrl = new Uri(url, UriKind.Absolute);
+                _configurator.SetIssuer(serverUrl);
+            });
+
+        Message = "Enter your server url to login";
     }
 
     public ReactiveCommand<Unit, Unit> LoginCommand { get; }
     public ReactiveCommand<Unit, Unit> LoginWithGithubCommand { get; }
     public ReactiveCommand<Unit, Unit> LogoutCommand { get; }
     public ReactiveCommand<Unit, Unit> CancelCommand { get; }
+
+    public string ServerUrl
+    {
+        get { return _serverUrl; }
+        set { this.RaiseAndSetIfChanged(ref _serverUrl, value); }
+    }
 
     public string Message
     {
@@ -186,4 +203,5 @@ public class MainViewModel : ViewModelBase
 
         return Task.CompletedTask;
     }
+
 }

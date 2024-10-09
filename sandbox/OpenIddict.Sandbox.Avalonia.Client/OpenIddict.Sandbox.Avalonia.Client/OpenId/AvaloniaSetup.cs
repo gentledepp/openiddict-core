@@ -22,7 +22,7 @@ internal static class AvaloniaSetup
         // add logging (copied from MAUI source)
         services.AddLogging();
         services.TryAddEnumerable(ServiceDescriptor.Singleton<ILoggerProvider, DebugLoggerProvider>());
-
+        
         services.AddDbContext<DbContext>(options =>
         {
             options.UseSqlite($"Filename={Path.Combine(Path.GetTempPath(), "openiddict-sandbox-avalonia-client.sqlite3")}");
@@ -66,24 +66,24 @@ internal static class AvaloniaSetup
 #endif
                        ;
 
-                // Add a client registration matching the client application definition in the server project.
-                options.AddRegistration(new OpenIddictClientRegistration
-                {
-                    Issuer = new Uri("https://vsr1d2md-44395.euw.devtunnels.ms/", UriKind.Absolute),
-                    ProviderName = "Local",
+                //// Add a client registration matching the client application definition in the server project.
+                //options.AddRegistration(new OpenIddictClientRegistration
+                //{
+                //    Issuer = new Uri("http://localhost:44349", UriKind.Absolute),
+                //    ProviderName = "Local",
 
-                    ClientId = "avalonia",
+                //    ClientId = "avalonia",
 
-                    // This sample uses protocol activations with a custom URI scheme to handle callbacks.
-                    //
-                    // For more information on how to construct private-use URI schemes,
-                    // read https://www.rfc-editor.org/rfc/rfc8252#section-7.1 and
-                    // https://www.rfc-editor.org/rfc/rfc7595#section-3.8.
-                    PostLogoutRedirectUri = new Uri("com.openiddict.sandbox.avalonia.client:/callback/logout/local", UriKind.Absolute),
-                    RedirectUri = new Uri("com.openiddict.sandbox.avalonia.client:/callback/login/local", UriKind.Absolute),
+                //    // This sample uses protocol activations with a custom URI scheme to handle callbacks.
+                //    //
+                //    // For more information on how to construct private-use URI schemes,
+                //    // read https://www.rfc-editor.org/rfc/rfc8252#section-7.1 and
+                //    // https://www.rfc-editor.org/rfc/rfc7595#section-3.8.
+                //    PostLogoutRedirectUri = new Uri("com.openiddict.sandbox.avalonia.client:/callback/logout/local", UriKind.Absolute),
+                //    RedirectUri = new Uri("com.openiddict.sandbox.avalonia.client:/callback/login/local", UriKind.Absolute),
 
-                    Scopes = { Scopes.Email, Scopes.Profile, Scopes.OfflineAccess, "demo_api" }
-                });
+                //    Scopes = { Scopes.Email, Scopes.Profile, Scopes.OfflineAccess, "demo_api" }
+                //});
 
                 // Register the Web providers integrations.
                 //
@@ -121,7 +121,6 @@ internal static class AvaloniaSetup
 
         services.AddSingleton<IMauiInitializeService>(static provider => new MauiHostedServiceAdapter(
             ActivatorUtilities.CreateInstance<OpenIddictClientSystemIntegrationPipeListener>(provider)));
-
 
         // Register the initialization service responsible for creating the SQLite database.
         services.AddScoped<IMauiInitializeScopedService, Worker>();

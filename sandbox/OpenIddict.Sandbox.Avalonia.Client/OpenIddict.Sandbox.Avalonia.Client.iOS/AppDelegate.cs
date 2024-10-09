@@ -20,7 +20,7 @@ public partial class AppDelegate : AvaloniaAppDelegate<App>
             var services = new ServiceCollection();
             var app = new App();
             app.ConfigureServices(services);
-            app.Provider = services.BuildServiceProvider();
+            app.BuildServiceProvider();
             return app;
         }).UseiOS()
         .With(new iOSPlatformOptions { RenderingMode = [iOSRenderingMode.Metal] })

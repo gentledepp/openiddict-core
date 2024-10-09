@@ -33,8 +33,7 @@ public class MainActivity : AvaloniaMainActivity<App>
             var services = new ServiceCollection();
             var app = new App();
             app.ConfigureServices(services);
-            var provider = services.BuildServiceProvider();
-            app.Provider = provider;
+            var provider = app.BuildServiceProvider();
             this.Provider = provider;
 
             return app;
