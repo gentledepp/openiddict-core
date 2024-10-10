@@ -14,17 +14,19 @@ public class MainViewModel : ViewModelBase
 
     private OpenIddictClientService _service;
     private readonly IClientRegistrationProvider _configurator;
+    private readonly HttpClient client;
     private string _message = string.Empty;
     private string _serverUrl = "https://localhost:44395";
     private bool _isEnabled = true;
     CancellationTokenSource? _source;
 
     public MainViewModel(OpenIddictClientService service,
-        IClientRegistrationProvider configurator)
+        IClientRegistrationProvider configurator,
+        HttpClient client)
     {
         _service = service;
         _configurator = configurator;
-
+        this.client = client;
         var canExecute = this.WhenAnyValue(v => v.IsEnabled);
 
         LoginCommand = ReactiveCommand.CreateFromTask(LoginAsync, canExecute);
@@ -107,13 +109,29 @@ public class MainViewModel : ViewModelBase
                 });
 
                 // Wait for the user to complete the authorization process.
-                var principal = (await _service.AuthenticateInteractivelyAsync(new()
+                var authResult = await _service.AuthenticateInteractivelyAsync(new()
                 {
                     CancellationToken = _source.Token,
                     Nonce = result.Nonce
-                })).Principal;
+                });
+
+                var principal = authResult.Principal;
+                var accessToken = authResult.TokenResponse.AccessToken;
+                var refreshToken = authResult.TokenResponse.RefreshToken;
+                var idToken = authResult.TokenResponse.IdToken;
+                var expirationInSeconds = authResult.TokenResponse.ExpiresIn;// Adjust according to your token expiration
+
 
                 Message = $"Welcome, {principal.FindFirst(Claims.Name)!.Value}.";
+                var requestMessage = new HttpRequestMessage(HttpMethod.Get, new Uri(new Uri(this.ServerUrl), "/Manage"));
+                requestMessage.Headers.Add("Authorization", $"Bearer {accessToken}");
+                var resp = await this.client.SendAsync(requestMessage);
+
+                // Send the token request
+                var tokenResponse = await _service.AuthenticateWithRefreshTokenAsync(new()
+                {
+                    RefreshToken = refreshToken!
+                });
             }
 
             catch (OperationCanceledException)
