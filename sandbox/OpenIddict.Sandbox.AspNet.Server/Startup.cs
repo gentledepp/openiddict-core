@@ -20,6 +20,7 @@ using OpenIddict.Server.Owin;
 using OpenIddict.Validation.Owin;
 using Owin;
 using static OpenIddict.Abstractions.OpenIddictConstants;
+using static OpenIddict.Server.OpenIddictServerEvents;
 
 [assembly: OwinStartup(typeof(OpenIddict.Sandbox.AspNet.Server.Startup))]
 namespace OpenIddict.Sandbox.AspNet.Server;
@@ -80,12 +81,22 @@ public class Startup
                            options.SetClientId("c4ade52327b01ddacff3")
                                   .SetClientSecret("da6bed851b75e317bf6b2cb67013679d9467c122")
                                   .SetRedirectUri("callback/login/github");
+                       })
+                       .AddMicrosoft(options =>
+                       {
+                           options
+                               .SetClientId("e622a0e5-f3e8-4998-b4e1-35f45e9b18cd") // application (client) id
+                               .SetClientSecret("_8x8Q~fc7GxwbieK04mL2tQuzrlqMU_yPTd5rawD") // generated secret from azure portal
+                               .SetRedirectUri("/callback/login/microsoft");
                        });
+
             })
 
             // Register the OpenIddict server components.
             .AddServer(options =>
             {
+                //options.SetIssuer(new Uri("https://vsr1d2md-44349.euw.devtunnels.ms/"));
+
                 // Enable the authorization, device, introspection,
                 // logout, token, userinfo and verification endpoints.
                 options.SetAuthorizationEndpointUris("connect/authorize")
@@ -117,7 +128,23 @@ public class Startup
                 options.UseOwin()
                        .EnableAuthorizationEndpointPassthrough()
                        .EnableLogoutEndpointPassthrough()
-                       .EnableTokenEndpointPassthrough();
+                       .EnableTokenEndpointPassthrough()
+                       .EnableUserinfoEndpointPassthrough()
+                       .EnableVerificationEndpointPassthrough();
+
+                options.AddEventHandler<ValidateTokenContext>(bldr =>
+                {
+                    bldr.UseInlineHandler(vtc =>
+                    {
+                        if(vtc.TokenTypeHint == TokenTypeHints.RefreshToken)
+                        {
+                            
+                        }
+
+                        return default;
+                    });
+
+                });
             })
 
             // Register the OpenIddict validation components.
@@ -200,25 +227,23 @@ public class Startup
 
             var manager = scope.Resolve<IOpenIddictApplicationManager>();
 
-            if (await manager.FindByClientIdAsync("mvc") is null)
+            var mvcd = new OpenIddictApplicationDescriptor
             {
-                await manager.CreateAsync(new OpenIddictApplicationDescriptor
-                {
-                    ApplicationType = ApplicationTypes.Web,
-                    ClientId = "mvc",
-                    ClientSecret = "901564A5-E7FE-42CB-B10D-61EF6A8F3654",
-                    ClientType = ClientTypes.Confidential,
-                    ConsentType = ConsentTypes.Explicit,
-                    DisplayName = "MVC client application",
-                    RedirectUris =
+                ApplicationType = ApplicationTypes.Web,
+                ClientId = "mvc",
+                ClientSecret = "901564A5-E7FE-42CB-B10D-61EF6A8F3654",
+                ClientType = ClientTypes.Confidential,
+                ConsentType = ConsentTypes.Explicit,
+                DisplayName = "MVC client application",
+                RedirectUris =
                     {
-                        new Uri("https://localhost:44378/callback/login/local")
+                        new Uri("https://localhost:44349/callback/login/local")
                     },
-                    PostLogoutRedirectUris =
+                PostLogoutRedirectUris =
                     {
-                        new Uri("https://localhost:44378/callback/logout/local")
+                        new Uri("https://localhost:44349/logout/local")
                     },
-                    Permissions =
+                Permissions =
                     {
                         Permissions.Endpoints.Authorization,
                         Permissions.Endpoints.Logout,
@@ -231,12 +256,177 @@ public class Startup
                         Permissions.Scopes.Roles,
                         Permissions.Prefixes.Scope + "demo_api"
                     },
-                    Requirements =
+                Requirements =
                     {
                         Requirements.Features.ProofKeyForCodeExchange
                     }
-                });
+            };
+            var mvc = await manager.FindByClientIdAsync("mvc");
+            if (mvc is null)
+            {
+                await manager.CreateAsync(mvcd);
             }
+            else
+            {
+                await manager.UpdateAsync(mvc, mvcd);
+            }
+
+            var mauid = new OpenIddictApplicationDescriptor
+            {
+                ApplicationType = ApplicationTypes.Native,
+                ClientId = "avalonia",
+                ClientType = ClientTypes.Public,
+                ConsentType = ConsentTypes.Implicit,
+                DisplayName = "Avalonia client application",
+                DisplayNames =
+                    {
+                        [CultureInfo.GetCultureInfo("fr-FR")] = "Application cliente avalonia"
+                    },
+                PostLogoutRedirectUris =
+                    {
+                        new Uri("com.openiddict.sandbox.avalonia.client:/callback/logout/local")
+                    },
+                RedirectUris =
+                    {
+                        new Uri("com.openiddict.sandbox.avalonia.client:/callback/login/local")
+                    },
+                Permissions =
+                    {
+                        Permissions.Endpoints.Authorization,
+                        Permissions.Endpoints.Logout,
+                        Permissions.Endpoints.Token,
+                        Permissions.GrantTypes.AuthorizationCode,
+                        Permissions.GrantTypes.RefreshToken,
+                        Permissions.ResponseTypes.Code,
+                        Permissions.Scopes.Email,
+                        Permissions.Scopes.Profile,
+                        Permissions.Scopes.Roles,
+                        Permissions.Prefixes.Scope + "demo_api"
+                    },
+                Requirements =
+                    {
+                        Requirements.Features.ProofKeyForCodeExchange
+                    }
+            };
+            var maui = await manager.FindByClientIdAsync("avalonia");
+            if (maui is null)
+            {
+                await manager.CreateAsync(mauid);
+            }
+            else
+            {
+                await manager.UpdateAsync(maui, mauid);
+            }
+
+            var mvc2d = new OpenIddictApplicationDescriptor
+            {
+                ClientId = "mvc2",
+                ConsentType = ConsentTypes.Explicit,
+                DisplayName = "Mvc browser client application",
+                ClientType = ClientTypes.Public,
+                PostLogoutRedirectUris =
+                    {
+                        new Uri("https://localhost:44349/logout/local2")
+                    },
+                RedirectUris =
+                    {
+                        new Uri("https://localhost:44349/callback/login/local2")
+                    },
+                Permissions =
+                    {
+                        Permissions.Endpoints.Authorization,
+                        Permissions.Endpoints.Logout,
+                        Permissions.Endpoints.Token,
+                        Permissions.GrantTypes.AuthorizationCode,
+                        Permissions.GrantTypes.RefreshToken,
+                        Permissions.ResponseTypes.Code,
+                        Permissions.Scopes.Email,
+                        Permissions.Scopes.Profile,
+                        Permissions.Scopes.Roles
+                    },
+                Requirements =
+                    {
+                        //Requirements.Features.ProofKeyForCodeExchange
+                    }
+            };
+            var mvc2 = await manager.FindByClientIdAsync("mvc2");
+
+            if (mvc2 is null)
+                await manager.CreateAsync(mvc2d);
+            else
+                await manager.UpdateAsync(mvc2, mvc2d);
+
+
+            var flrd = new OpenIddictApplicationDescriptor
+            {
+                ClientId = "mobileapp",
+                ClientSecret = "secret",
+                DisplayName = "Mobile App",
+                RedirectUris = { new Uri("https://localhost:44349/account/callback") },
+                ClientType = OpenIddictConstants.ClientTypes.Confidential,
+                ConsentType = OpenIddictConstants.ConsentTypes.Implicit,
+                Permissions =
+                {
+                    OpenIddictConstants.Permissions.Endpoints.Authorization,
+                    OpenIddictConstants.Permissions.Endpoints.Logout,
+                    OpenIddictConstants.Permissions.Endpoints.Token,
+                    OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode,
+                    OpenIddictConstants.Permissions.GrantTypes.ClientCredentials,
+                    OpenIddictConstants.Permissions.GrantTypes.Password,
+                    OpenIddictConstants.Permissions.GrantTypes.RefreshToken,
+                    OpenIddictConstants.Permissions.ResponseTypes.Code,
+                    OpenIddictConstants.Permissions.Scopes.Email,
+                    OpenIddictConstants.Permissions.Scopes.Profile,
+                    OpenIddictConstants.Permissions.Scopes.Roles
+                },
+                Requirements =
+                {
+                    OpenIddictConstants.Requirements.Features.ProofKeyForCodeExchange
+                },
+                Properties = { },
+            };
+            var flr = await manager.FindByClientIdAsync("mobileapp");
+
+            if (flr is null)
+                await manager.CreateAsync(flrd);
+            else
+                await manager.UpdateAsync(flr, flrd);
+
+            var prtld = new OpenIddictApplicationDescriptor
+            {
+                ClientId = "webapp",
+                // A client secret cannot be associated with a public application.
+                DisplayName = "Web App",
+                RedirectUris = { new Uri("https://localhost:44300/Account/Callback") },
+                ClientType = OpenIddictConstants.ClientTypes.Public,
+                ConsentType = OpenIddictConstants.ConsentTypes.Implicit,
+                Permissions =
+                {
+                    OpenIddictConstants.Permissions.Endpoints.Authorization,
+                    OpenIddictConstants.Permissions.Endpoints.Logout,
+                    OpenIddictConstants.Permissions.Endpoints.Token,
+                    OpenIddictConstants.Permissions.GrantTypes.AuthorizationCode,
+                    OpenIddictConstants.Permissions.GrantTypes.ClientCredentials,
+                    OpenIddictConstants.Permissions.GrantTypes.Password,
+                    OpenIddictConstants.Permissions.GrantTypes.RefreshToken,
+                    OpenIddictConstants.Permissions.ResponseTypes.Code,
+                    OpenIddictConstants.Permissions.Scopes.Email,
+                    OpenIddictConstants.Permissions.Scopes.Profile,
+                    OpenIddictConstants.Permissions.Scopes.Roles
+                },
+                Requirements =
+                {
+                    OpenIddictConstants.Requirements.Features.ProofKeyForCodeExchange
+                },
+                Properties = { },
+            };
+            var prtl = await manager.FindByClientIdAsync("webapp");
+
+            if (prtl is null)
+                await manager.CreateAsync(prtld);
+            else
+                await manager.UpdateAsync(prtl, prtld);
+
 
             if (await manager.FindByClientIdAsync("postman") is null)
             {

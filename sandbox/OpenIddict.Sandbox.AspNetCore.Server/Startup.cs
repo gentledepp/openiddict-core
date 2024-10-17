@@ -103,7 +103,7 @@ public class Startup
             .AddServer(options =>
             {
                 // Set Issuer URL
-                //options.SetIssuer(new Uri("https://vsr1d2md-44395.euw.devtunnels.ms/"));
+                options.SetIssuer(new Uri("https://vsr1d2md-44395.euw.devtunnels.ms/"));
                 
                 // Enable the authorization, device, introspection, logout,
                 // token, revocation, userinfo and verification endpoints.

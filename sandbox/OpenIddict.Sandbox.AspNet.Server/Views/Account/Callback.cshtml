@@ -1,0 +1,114 @@
+﻿@{
+    ViewBag.Title = "Nothing to see here 👀";
+}
+
+<h2>@ViewBag.Title.</h2>
+<div>
+
+    <div id="openiddicterror"></div>
+
+    <script type="text/javascript">
+        (function () {
+
+            function getFragment() {
+                if (window.location.hash.indexOf("#") === 0) {
+                    return parseQueryString(window.location.hash.substr(1));
+                } else {
+                    return {};
+                }
+            }
+
+            // Set query string parameters to an object
+            function parseQueryString(queryString) {
+                var data = {},
+                    pairs,
+                    pair,
+                    separatorIndex,
+                    escapedKey,
+                    escapedValue,
+                    key,
+                    value;
+
+                if (queryString === null) {
+                    return data;
+                }
+
+                pairs = queryString.split("&");
+
+                for (var i = 0; i < pairs.length; i++) {
+                    pair = pairs[i];
+                    separatorIndex = pair.indexOf("=");
+
+                    if (separatorIndex === -1) {
+                        escapedKey = pair;
+                        escapedValue = null;
+                    } else {
+                        escapedKey = pair.substr(0, separatorIndex);
+                        escapedValue = pair.substr(separatorIndex + 1);
+                    }
+
+                    key = decodeURIComponent(escapedKey);
+                    value = decodeURIComponent(escapedValue);
+
+                    data[key] = value;
+                }
+
+                return data;
+            }
+
+
+            // parse fragment (token)
+            var fragment = getFragment();
+
+            var client_id = sessionStorage["client_id"] || "iCLFillerApp";
+            var client_secret = sessionStorage["client_secret"] || "iCLFillerApp2013";
+            var redirect_uri = sessionStorage["redirect_uri"] || "https://localhost:44349/";
+            var code_verifier = sessionStorage["code_verifier"] || "asdfmASDFMFMDMFMS123123123qwe123123123112";
+            var data = "grant_type=authorization_code" +
+                "&code=" + fragment.code +
+                "&client_id=" + client_id +
+                "&redirect_uri="+redirect_uri +
+                "&code_verifier=" + code_verifier;
+
+            if (!!client_secret)
+                data += "&client_secret=" + client_secret;
+
+            // send to token endpoint to get access_token and refresh_token
+            fetch("/connect/token", {
+                method: "POST",
+                body: encodeURI(data),
+                headers: {
+                    "Content-Type":"application/x-www-form-urlencoded"
+                }
+            })
+            .then((response) => {
+                response.json()
+                    .then(r => {
+                        console.log(r);
+
+                        if (!!r.access_token && !!r.refresh_token) {
+                            var newUrl = "/#";
+
+                            var params = [];
+                            for (var key in r) {
+                                params.push(key + "=" + encodeURIComponent(r[key]))
+                            }
+                            newUrl += params.join("&");
+
+                            console.log(newUrl);
+                            window.location.assign(newUrl);
+
+                        }
+                        else if (!!r.error) {
+
+                            document.getElementById("openiddicterror").innerText = r.error + " " + r.error_description;
+                        }
+                    });;
+            })
+            .then((json) => console.log(json));
+
+        })();
+
+    </script>
+
+</div>

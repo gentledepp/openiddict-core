@@ -88,6 +88,15 @@ public class AccountController : Controller
         }
     }
 
+
+    [AllowAnonymous]
+    public ActionResult Callback(string returnUrl)
+    {
+        ViewBag.ReturnUrl = returnUrl;
+        return View();
+    }
+
+
     //
     // GET: /Account/VerifyCode
     [AllowAnonymous]
