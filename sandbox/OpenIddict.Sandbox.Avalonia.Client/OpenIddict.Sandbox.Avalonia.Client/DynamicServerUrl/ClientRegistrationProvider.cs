@@ -42,7 +42,7 @@ public class ClientRegistrationProvider : IClientRegistrationProvider
             PostLogoutRedirectUri = new Uri("com.openiddict.sandbox.avalonia.client:/callback/logout/local", UriKind.Absolute),
             RedirectUri = new Uri("com.openiddict.sandbox.avalonia.client:/callback/login/local", UriKind.Absolute),
 
-            Scopes = { Scopes.Email, Scopes.Profile, Scopes.OfflineAccess, "demo_api" }
+            Scopes = { Scopes.Email, Scopes.Profile, Scopes.OfflineAccess }//, "demo_api" }
         };
     }
 

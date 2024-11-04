@@ -63,6 +63,32 @@ public partial class App : Application
         // emulate maui behavior:
         provider.InitializeMauiInitializeServices();
 
+        // provide IoC-enabled viewlocator
+        DataTemplates.Add(provider.GetRequiredService<ViewLocator>());
+
+        
+        if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
+        {
+            var window = new MainView();
+            window.DataContext = provider.GetRequiredService<MainViewModel>();
+            singleViewPlatform.MainView = window;
+
+            // emulate MAUI behavior
+            provider.InitializeMauiInitializeScopedService();
+        }
+
+
+        base.OnFrameworkInitializationCompleted();
+        
+        // Usually, we don't want to block main UI thread.
+        // But if it's required to start async services before we create any window,
+        // then don't set any MainWindow, and simply call Show() on a new window later after async initialization. 
+        await GlobalHost.StartAsync();
+
+        // Because OpenIddict has a service (started during GlobalHosst.StartAsync())
+        // that is responsible to receive custom scheme URI open events and ensures only one Window will be opened
+        // we need to set the MainWindow _after_ calling and awaiting "StartAsync"
+        // Otherwise we will get a "flickering window" whenever we login as the window is created and immediately closed by the said service
         if (ApplicationLifetime is IClassicDesktopStyleApplicationLifetime desktop)
         {
             var window = new MainWindow();
@@ -79,24 +105,6 @@ public partial class App : Application
             // emulate MAUI behavior
             provider.InitializeMauiInitializeScopedService();
         }
-        else if (ApplicationLifetime is ISingleViewApplicationLifetime singleViewPlatform)
-        {
-            var window = new MainView();
-            window.DataContext = provider.GetRequiredService<MainViewModel>();
-            singleViewPlatform.MainView = window;
-
-            // emulate MAUI behavior
-            provider.InitializeMauiInitializeScopedService();
-        }
-
-        DataTemplates.Add(provider.GetRequiredService<ViewLocator>());
-
-        base.OnFrameworkInitializationCompleted();
-
-        // Usually, we don't want to block main UI thread.
-        // But if it's required to start async services before we create any window,
-        // then don't set any MainWindow, and simply call Show() on a new window later after async initialization. 
-        await GlobalHost.StartAsync();
     }
 
     /// <summary>
